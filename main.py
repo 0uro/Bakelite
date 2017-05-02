@@ -6,7 +6,10 @@ from time import sleep
 from subprocess import check_output
 from threading import Thread
 from tempfile import TemporaryFile
+from os import path
 from gTTS import *
+
+import pygame
 
 from bakelite_actions import *
 
@@ -17,6 +20,8 @@ class Bakelite(Thread):
     def __init__(self, instance="other", pinRotary=4, pinHook=11, period=0.125):
         Thread.__init__(self)
         self.instance = instance
+        pygame.mixer.pre_init(44100,-16,1,2048)
+        pygame.init()
 
         self.p = period
         self.pinH,self.pinR = pinHook,pinRotary
@@ -25,6 +30,11 @@ class Bakelite(Thread):
         GPIO.setup(self.pinR,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)	
         GPIO.setup(self.pinH,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
+    def playMp3(self,arg):
+        if path.isfile(arg):
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load(arg)
+            pygame.mixer.music.play(-1)
 
     def runCmd(self,arg):
         """TestPerformers"""
