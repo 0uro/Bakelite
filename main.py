@@ -5,7 +5,8 @@ from RPi import GPIO
 from time import sleep
 from subprocess import check_output
 from threading import Thread
-#import gtts
+from tempfile import TemporaryFile
+from gTTS import *
 
 from bakelite_actions import *
 
@@ -23,6 +24,7 @@ class Bakelite(Thread):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pinR,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)	
         GPIO.setup(self.pinH,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+
 
     def runCmd(self,arg):
         """TestPerformers"""
@@ -83,7 +85,7 @@ class Bakelite(Thread):
         while 1:
             """Main loop - call functions"""
             sleep(0.8)
-                #| cmds['stream'][1] ):cmds['out'][1] |
+            #| cmds['stream'][1] ):cmds['out'][1] |
             if hook:
                 if not ( self.runCmd('in') | self.runCmd('out') | self.runCmd('stream') ):
                     # Calling routine
@@ -97,14 +99,14 @@ class Bakelite(Thread):
             else:
                 # Service codes
                 if len(NUM) == 3:
-                        ok=0
-                        print("Lenght :" + str(len(act.keys())))
-                        for i in act.keys():
-                            #print "NUM : " + str(NUM)
-                            #print "act : " + str(act.keys()[i])
-                            if NUM == i:
-                                exec(act[NUM])
-                                ok=1
+                    ok=0
+                    print("Lenght :" + str(len(act.keys())))
+                    for i in act.keys():
+                        #print "NUM : " + str(NUM)
+                        #print "act : " + str(act.keys()[i])
+                        if NUM == i:
+                            exec(act[NUM])
+                            ok=1
 
 if __name__ == '__main__':
     p=Bakelite()

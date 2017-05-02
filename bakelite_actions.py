@@ -2,36 +2,28 @@
 
 from subprocess import *
 
-mpg = '/usr/bin/mpg123'
-snd_path = '/home/pi/phone_sounds/'
+gen = 'generic'
 phone = '/usr/bin/linphonecsh'
 kill = '/usr/bin/killall'
 
-gen = 'generic'
-
-#def runCmd(arg):
-#    return( cmds[arg][0] in str(check_output(cmds[arg][1])) )
-
-voices = {\
-    'list'  : "liste les services disponibles.",\
-    'shut'  : "éteint le téléphone.",\
-    'pi'    : "donne les premières décimales de pi.",\
-    'ghost' : "à utiliser en cas d'attaque de fantômes.",\
-    'diag'  : "effectue un diagnostic système.",\
-    'crowd' : "appel non urgent.",\
-    'nocall': "aucun appel actif.",\
-    'call'  : "appel en cours.",\
-    'sip'   : "il y a un problème d'enregistrement SIP.",\
-    'net'   : "il y a un problème de connection au réseau.",\
-    'ok'    : "aucun problème détecté.",\
-}
-
 act = {\
-    111 : 'self.Test("service")',\
-    123 : '/usr/bin/sudo /sbin/halt -f',\
-    314 : mpg + 'pi.mp3',\
-    666 : mpg + 'ghost.mp3',\
-    999 : mpg + 'itcrowd.mp3',\
+    17  : [ 'self.doCall()',                "numéro police secours."],\
+    18  : [ 'self.doCall()',                "numéro des pompiers."],\
+    112 : [ 'self.doCall()',                "numéro d'urgence universel."],\
+    \
+    111 : [ 'self.listServices()',          "liste les services disponibles."],\
+    123 : [ '/usr/bin/sudo /sbin/halt -f',  "éteint le téléphone."],\
+    \
+    314 : [ 'self.playSound("pi")',         "donne les premières décimales de pi."],\
+    666 : [ 'self.playSound("ghost")',      "à utiliser en cas d'attaque de fantômes."],\
+    911 : [ 'self.playSound("sos")',        "effectue un diagnostic système."],\
+    999 : [ 'self.playSound("crowd")',      "appel non urgent."],\
+    \
+    'nocall': ['self.playSound("nocall")',  "aucun appel actif."],\
+    'call'  : ['self.playSound("call")',    "appel en cours."],\
+    'sip'   : ['self.playSound("sip")',     "il y a un problème d'enregistrement SIP."],\
+    'net'   : ['self.playSound("net")',     "il y a un problème de connection au réseau."],\
+    'ok'    : ['self.playSound("ok")',      "aucun problème détecté."],\
 }
 
 # TODO  111 : liste les services
