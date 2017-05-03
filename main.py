@@ -5,16 +5,16 @@ from RPi import GPIO
 from time import sleep
 from subprocess import check_output,Popen
 from threading import Thread
-from tempfile import TemporaryFile
 from os import path
 
 from bakelite_actions import *
 
-mpg = "/usr/bin/mpg123"
-snd = "/home/pi/Bakelite/sounds/"
-
-global NUM,hook,counter
-NUM,hook,counter = "",1,0
+global STATUS
+STATUS= {\
+            'hook'      : 0     ,\
+            'count'     : 0     ,\
+            'num'       : ""    ,\
+        }
 
 class Bakelite(Thread):
     def __init__(self, instance="other", pinRotary=4, pinHook=11, period=0.125):
@@ -27,36 +27,37 @@ class Bakelite(Thread):
         GPIO.setup(self.pinR,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)	
         GPIO.setup(self.pinH,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
-        self.playMp3 = lambda g:(Popen([mpg, snd + g + ".mp3"]))
-        self.callMp3 = lambda h:(call([mpg, snd + g + ".mp3"]))
+        self.playMp3 = lambda g:(Popen( [mpg , snd + g + '.mp3'] ))
+        self.callMp3 = lambda h:(call( [mpg , snd + h + '.mp3' ] ))
         self.runCmd = lambda  j:( cmds[j][0] in str( check_output(cmds[j][1]) ) )
 
     def doCall(self):
         """Execute Call"""
-        global NUM
-        cmds['call'][1].append('call '+ NUM)
-        call(cmds['call'][1])
-        cmds['call'][1].pop(-1)
-        NUM=""
+        global STATUS
+        phone.append('call ' + STATUS["num"])
+        call(phone)
+        STATUS["num"]=""
+        phone.pop(-1)
 
     def listServices(self):
         """Tells all available service codes"""
         for i in act.keys():
             if isinstance(i,int) & ( (i!=17) & (i!=18) & (i!=112) ):
-                call([ mpg, snd + str(i) + "_num.mp3" ])
+                call([ mpg + str(i) + "_num.mp3" ])
                 self.callMp3(str(i))
 
-#    def diags(self):
-#        """Execute system diagnosis"""
+#    def doDiags(self):
+#        for i in act.keys():
 #            if isinstance(i,str):
-#        if not (cmds["net"][0] in cmds["net"][1]):
-#            exec(act["net"][0])
+#                exec( act[i][0]() )
+#                if act[i][0]():
+#                    self.callMp3(i)
 
     def run(self):
         """ count impulsions and returns value """
-        global NUM,hook,counter
+        global num,hook,count
         if self.instance == "rotary":
-            """Read the rotary"""
+            """Reads the rotary"""
             while 1 :
                 enLecture,pulse = 1,0
                 # Pin change is used by pin hook status, so we'll use enLecture variable
@@ -70,10 +71,10 @@ class Bakelite(Thread):
                         enLecture=0
                         if(pulse==10):
                             pulse=0
-                        NUM = NUM + str(pulse)
-                        print("rotary NUM : " + str(NUM) + " pulse : " + str(pulse))
+                        STATUS["num"] = STATUS["num"] + str(pulse)
+#                        print("rotary num : " + str(STATUS['num']) + " pulse : " + str(pulse))
                         enLecture = 0
-                        counter = 0
+                        STATUS["count"] = 0
 
         elif self.instance == "hook":
             """Updates the hook status"""
@@ -82,36 +83,43 @@ class Bakelite(Thread):
             while 1:
                 # Awaits for pin change on hook and reads pin value
                 GPIO.wait_for_edge(self.pinH,GPIO.FALLING)
-                Popen(["/usr/bin/killall","mpg123"])
+                Popen(["killall",mpg[0]])
                 sleep(0.5)
                 if (GPIO.input(self.pinH)):
-                    hook = 0
-                    self.runCmd('term')
+                    STATUS["hook"] = 0
+                    print(term)
+                    call(term)
                 else:
-                    hook = 1
-                    self.runCmd('answer')
-                NUM=""
+                    STATUS["hook"] = 1
+                    call(answer)
+                STATUS["num"]=""
 
     def main(self):
-        global NUM,hook,counter
+        """Start instances, handles timeout and execute actions"""
+        global STATUS
         h=Bakelite("hook")
         h.start()
         r=Bakelite("rotary")
         r.start()
+
         while 1:
             """Main loop - call functions"""
             sleep(0.8)
-            if len(NUM) != 0:
-                counter = counter + 1
-                print(counter)
-            if counter == 10:
-                NUM,counter="",0
-                counter = 0
+
+            # Timeout
+            if len(STATUS["num"]) != 0:
+                STATUS["count"] = STATUS["count"] + 1
+            if STATUS["count"] == 10:
+                STATUS["num"],STATUS["count"]="",0
+
+            # Service codes
             for i in act.keys():
-                if NUM == str(i):
+                if STATUS["num"] == str(i):
                     exec(act[i][0])
-                    NUM=""
-            if hook & (len(NUM) == 10):
+                    STATUS["num"]=""
+
+            # Phone call
+            if STATUS["hook"] & (len(STATUS["num"]) == 10):
                 self.doCall()
 
 if __name__ == '__main__':
